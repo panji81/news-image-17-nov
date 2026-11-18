@@ -5,7 +5,7 @@
 // Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
 
-import { copyFileSync, mkdirSync, readFileSync, statSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, renameSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const src = new URL('./entry.png', import.meta.url);
@@ -22,4 +22,7 @@ if (width > 1024 || height > 1024) throw new Error(`entry.png is ${width}x${heig
 
 const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 mkdirSync(outDir, { recursive: true });
-copyFileSync(src, join(outDir, 'entry.png'));
+// Copy atomically so a failed run never leaves a half-written entry.png behind.
+const tmp = join(outDir, '.entry.png.tmp');
+copyFileSync(src, tmp);
+renameSync(tmp, join(outDir, 'entry.png'));
